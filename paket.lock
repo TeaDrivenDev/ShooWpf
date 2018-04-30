@@ -1,0 +1,10 @@
+RESTRICTION: == net461
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    FSharp.Core (4.3.4)
+    System.ValueTuple (4.4)
+
+GROUP Build
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    FAKE (4.64.12)

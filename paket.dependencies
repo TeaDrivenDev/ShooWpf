@@ -1,0 +1,10 @@
+source https://api.nuget.org/v3/index.json
+framework: net461
+
+nuget FSharp.Core
+nuget System.ValueTuple
+
+group Build
+    source https://api.nuget.org/v3/index.json
+
+    nuget FAKE
