@@ -7,8 +7,8 @@
         xmlns:viewModels="clr-namespace:Shoo.ViewModels;assembly=Shoo"
         x:Name="MainWindowView"
         Title="Shoo"
-        Width="1600"
-        Height="900"
+        Width="1000"
+        Height="500"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{StaticResource MaterialDesignFont}"
         TextElement.FontSize="13"
@@ -16,10 +16,65 @@
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
-        WindowState="Maximized"
         mc:Ignorable="d">
     <Window.DataContext>
         <viewModels:MainWindowViewModel />
     </Window.DataContext>
-    <Grid />
+    <Window.Resources>
+        <SolidColorBrush x:Key="ErrorBackground"
+                         Opacity="0.4"
+                         Color="DarkRed" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0"
+                     Margin="2 0"
+                     materialDesign:HintAssist.Hint="Source Directory" />
+            <Button Grid.Column="1"
+                    Margin="2" />
+            <TextBox Grid.Column="2"
+                     Margin="2 0"
+                     materialDesign:HintAssist.Hint="Target Directory" />
+            <Button Grid.Column="3"
+                    Margin="2" />
+        </Grid>
+
+        <TextBox Grid.Row="1"
+                 Margin="5"
+                 materialDesign:HintAssist.Hint="File Types" />
+
+        <Grid Grid.Row="2"
+              Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ToggleButton Grid.Column="0"
+                          Margin="0 10 0 0"
+                          VerticalAlignment="Top"
+                          RenderTransformOrigin="0.5 0.5"
+                          Style="{StaticResource MaterialDesignSwitchToggleButton}">
+                <ToggleButton.RenderTransform>
+                    <RotateTransform Angle="-90" />
+                </ToggleButton.RenderTransform>
+            </ToggleButton>
+            <ItemsControl Grid.Column="1" />
+        </Grid>
+
+    </Grid>
 </Window>
