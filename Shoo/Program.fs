@@ -1,7 +1,27 @@
-﻿// Learn more about F# at http://fsharp.org
-// See the 'F# Tutorial' project for more help.
+﻿namespace Shoo
 
-[<EntryPoint>]
-let main argv = 
-    printfn "%A" argv
-    0 // return an integer exit code
+open System.Windows
+
+open FsXaml
+
+type MainWindowBase = XAML<"MainWindow.xaml">
+
+type MainWindow() as this =
+    inherit MainWindowBase()
+
+
+type AppBase = XAML<"App.xaml">
+
+type App() =
+    inherit AppBase()
+
+    member __.Application_Startup (_ : obj, _ : StartupEventArgs) =
+        MainWindow().Show()
+
+module Program =
+    open System
+
+    [<STAThread>]
+    [<EntryPoint>]
+    let main argv =
+        App().Run()

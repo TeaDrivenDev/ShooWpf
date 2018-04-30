@@ -1,2 +1,7 @@
 System.ValueTuple
 FSharp.Core
+FSharp.Control.Reactive
+FsXaml.Wpf
+MaterialDesignThemes
+ReactiveProperty
+ReactiveUI
