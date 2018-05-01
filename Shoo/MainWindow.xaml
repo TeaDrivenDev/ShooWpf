@@ -109,7 +109,9 @@
                     <RotateTransform Angle="-90" />
                 </ToggleButton.RenderTransform>
             </ToggleButton>
-            <ItemsControl Grid.Column="1" />
+            <ItemsControl Grid.Column="1"
+                          DisplayMemberPath="Name"
+                          ItemsSource="{Binding Files}" />
         </Grid>
 
     </Grid>
