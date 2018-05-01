@@ -17,12 +17,11 @@ module Utility =
         observable.ToReadOnlyReactiveProperty()
 
 type FileToMoveViewModel(fileInfo : FileInfo) =
-    
+
     member __.Name = fileInfo.Name
     member __.Time = fileInfo.LastWriteTime
     member __.Size = fileInfo.Length
-    
-    
+
 type MainWindowViewModel() =
     let sourceDirectory = new ReactiveProperty<_>("")
     let destinationDirectory = new ReactiveProperty<_>("")
@@ -69,8 +68,7 @@ type MainWindowViewModel() =
                 watcher.Path <- sourceDirectory.Value
                 watcher.EnableRaisingEvents <- true)
         |> ignore
-            
-    
+
     member __.SourceDirectory = sourceDirectory
     member __.DestinationDirectory = destinationDirectory
     member __.IsSourceDirectoryValid = isSourceDirectoryValid
