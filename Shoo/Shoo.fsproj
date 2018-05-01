@@ -271,6 +271,7 @@
     <Compile Include="UIHelper.fs" />
     <Compile Include="Program.fs" />
     <None Include="Script1.fsx" />
+    <None Include="Testing.fsx" />
     <None Include="App.config" />
     <Content Include="paket.references" />
   </ItemGroup>
