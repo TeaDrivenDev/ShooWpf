@@ -9,6 +9,7 @@ open System.Windows
 open FSharp.Control.Reactive
 
 open Reactive.Bindings
+open Reactive.Bindings.Notifiers
 open ReactiveUI
 
 [<AutoOpen>]
@@ -18,9 +19,12 @@ module Utility =
 
 type FileToMoveViewModel(fileInfo : FileInfo) =
 
+    let progress = new ReactiveProperty<_>(75)
+
     member __.Name = fileInfo.Name
     member __.Time = fileInfo.LastWriteTime
     member __.Size = fileInfo.Length
+    member __.MoveProgress = progress
 
 type MainWindowViewModel() =
     let sourceDirectory = new ReactiveProperty<_>("")
@@ -30,6 +34,8 @@ type MainWindowViewModel() =
     let mutable isDestinationDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let files = ObservableCollection<_>()
+    
+    let canMoveFile = new BooleanNotifier(true)
 
     let watcher = new FileSystemWatcher()
 
@@ -54,7 +60,7 @@ type MainWindowViewModel() =
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun e ->
             e.FullPath
-            |> FileInfo
+            |> (FileInfo >> FileToMoveViewModel)
             |> files.Add)
         |> ignore
 
