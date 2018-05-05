@@ -11,8 +11,8 @@ NUGET
       MaterialDesignColors (>= 1.1.2)
     ReactiveProperty (4.2.2)
       System.Reactive (>= 3.1.1)
-    ReactiveUI (8.0.0-alpha0117)
-      Splat (>= 2.0)
+    ReactiveUI (8.0)
+      Splat (>= 4.0)
       System.Reactive (>= 3.1.1 < 4.0)
     Splat (4.0)
       System.Drawing.Primitives (>= 4.3)
@@ -34,4 +34,4 @@ NUGET
 GROUP Build
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    FAKE (4.64.12)
+    FAKE (4.64.13)

@@ -61,6 +61,25 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Resource Include="App.xaml" />
+    <Resource Include="MainWindow.xaml" />
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="ViewModels.fs" />
+    <Compile Include="UIHelper.fs" />
+    <Compile Include="Program.fs" />
+    <None Include="Script1.fsx" />
+    <None Include="Testing.fsx" />
+    <None Include="App.config" />
+    <Content Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6.1'">
       <ItemGroup>
@@ -162,7 +181,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6.1'">
       <ItemGroup>
         <Reference Include="ReactiveUI">
-          <HintPath>..\packages\ReactiveUI\lib\net45\ReactiveUI.dll</HintPath>
+          <HintPath>..\packages\ReactiveUI\lib\net461\ReactiveUI.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -263,23 +282,4 @@
       </ItemGroup>
     </When>
   </Choose>
-  <ItemGroup>
-    <Resource Include="App.xaml" />
-    <Resource Include="MainWindow.xaml" />
-    <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="ViewModels.fs" />
-    <Compile Include="UIHelper.fs" />
-    <Compile Include="Program.fs" />
-    <None Include="Script1.fsx" />
-    <None Include="Testing.fsx" />
-    <None Include="App.config" />
-    <Content Include="paket.references" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
 </Project>
