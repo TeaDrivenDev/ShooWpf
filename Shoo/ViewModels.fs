@@ -20,6 +20,8 @@ module Utility =
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
+    let trim (s : string) = s.Trim()
+
 type CopyOperation =
     {
         Source : string
@@ -73,6 +75,8 @@ type MainWindowViewModel() =
     let mutable isSourceDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable isDestinationDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
+    let fileExtensions = new ReactiveProperty<_>("")
+
     let enableProcessing = new ReactiveProperty<_>(false)
 
     let files = ObservableCollection<_>()
@@ -112,7 +116,12 @@ type MainWindowViewModel() =
 
         let fileToMoveViewModelsObservable =
             watcher.Renamed
-            |> Observable.map (fun e -> FileInfo e.FullPath |> FileToMoveViewModel)
+            |> Observable.map (fun e -> FileInfo e.FullPath)
+            |> Observable.filter (fun fileInfo ->
+                String.IsNullOrWhiteSpace fileExtensions.Value
+                || fileExtensions.Value.Split([| ' ' |], StringSplitOptions.RemoveEmptyEntries)
+                   |> Array.contains (fileInfo.Extension.Substring 1))
+            |> Observable.map FileToMoveViewModel
 
         let fileToMoveViewModels = new ReplaySubject<_>()
         
@@ -153,6 +162,8 @@ type MainWindowViewModel() =
     member __.DestinationDirectory = destinationDirectory
     member __.IsSourceDirectoryValid = isSourceDirectoryValid
     member __.IsDestinationDirectoryValid = isDestinationDirectoryValid
+
+    member __.FileExtensions = fileExtensions
 
     member __.EnableProcessing = enableProcessing
 
