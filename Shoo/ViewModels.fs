@@ -2,7 +2,9 @@
 
 open System
 open System.Collections.ObjectModel
+open System.ComponentModel
 open System.IO
+open System.Net
 open System.Reactive.Concurrency
 open System.Windows
 
@@ -17,9 +19,11 @@ module Utility =
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
+type Download = { Source : string; Destination : string }
+
 type FileToMoveViewModel(fileInfo : FileInfo) =
 
-    let progress = new ReactiveProperty<_>(75)
+    let progress = new ReactiveProperty<_>(0)
 
     member __.Name = fileInfo.Name
     member __.Time = fileInfo.LastWriteTime
@@ -29,6 +33,24 @@ type FileToMoveViewModel(fileInfo : FileInfo) =
 type MainWindowViewModel() =
     let sourceDirectory = new ReactiveProperty<_>("")
     let destinationDirectory = new ReactiveProperty<_>("")
+
+    // see https://stackoverflow.com/a/19755317/236507
+    let copy source destinationDirectory =
+        let client = new WebClient()
+        client.DownloadProgressChanged.Add (fun (e : DownloadProgressChangedEventArgs) ->
+            if e.ProgressPercentage % 10 = 0
+            then
+                printfn "%i %%" e.ProgressPercentage)
+        client.DownloadFileCompleted.Add (fun (e : AsyncCompletedEventArgs) ->
+            let download = e.UserState :?> Download
+
+            let time = (FileInfo download.Source).LastWriteTimeUtc
+
+            File.SetLastWriteTimeUtc(download.Destination, time))
+
+        let destination = Path.Combine(destinationDirectory, Path.GetFileName source)
+
+        client.DownloadFileAsync(Uri source, destination, { Source = source; Destination = destination })
 
     let mutable isSourceDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable isDestinationDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
@@ -56,14 +78,6 @@ type MainWindowViewModel() =
                 Directory.Exists destination && source <> destination)
             |> toReadOnlyReactiveProperty
 
-        watcher.Renamed
-        |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun e ->
-            e.FullPath
-            |> (FileInfo >> FileToMoveViewModel)
-            |> files.Add)
-        |> ignore
-
         isSourceDirectoryValid
         |> Observable.distinctUntilChanged
         |> Observable.subscribe(fun isValid ->
@@ -74,6 +88,17 @@ type MainWindowViewModel() =
                 watcher.Path <- sourceDirectory.Value
                 watcher.EnableRaisingEvents <- true)
         |> ignore
+
+        let fileToMoveViewModels =
+            watcher.Renamed
+            |> Observable.map (fun e -> FileInfo e.FullPath |> FileToMoveViewModel)
+
+        fileToMoveViewModels
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe files.Add
+        |> ignore
+
+        
 
     member __.SourceDirectory = sourceDirectory
     member __.DestinationDirectory = destinationDirectory
