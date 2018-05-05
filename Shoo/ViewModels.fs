@@ -29,6 +29,8 @@ type CopyOperation =
         WebClient : WebClient
     }
 
+type Replacement = { ToReplace : string; ReplaceWith : string }
+
 type FileToMoveViewModel(fileInfo : FileInfo) =
 
     let progress = new ReactiveProperty<_>(0)
@@ -43,9 +45,21 @@ type MainWindowViewModel() =
     let sourceDirectory = new ReactiveProperty<_>("")
     let destinationDirectory = new ReactiveProperty<_>("")
 
-    // see https://stackoverflow.com/a/19755317/236507
-    let copy reportProgress onDownloadComplete source destinationDirectory =
+    let readReplacements replacementsFilePath =
+        if File.Exists replacementsFilePath
+        then
+            File.ReadAllLines replacementsFilePath
+            |> Array.map (fun s ->
+                let [| toReplace; replaceWith |] = s.Split '|'
+
+                { ToReplace = toReplace; ReplaceWith = replaceWith })
+            |> Array.toList
+        else []
+
+    // File copy with progress: https://stackoverflow.com/a/19755317/236507
+    let copy reportProgress onDownloadComplete replacements source destinationDirectory =
         let client = new WebClient()
+
         client.DownloadProgressChanged
         |> Observable.map (fun (e : DownloadProgressChangedEventArgs) -> e.ProgressPercentage)
         |> Observable.distinctUntilChanged
@@ -66,7 +80,11 @@ type MainWindowViewModel() =
             onDownloadComplete())
         |> ignore
 
-        let destination = Path.Combine(destinationDirectory, Path.GetFileName source)
+        let destinationFileName =
+            (Path.GetFileNameWithoutExtension source, replacements)
+            ||> List.fold (fun acc current -> acc.Replace(current.ToReplace, current.ReplaceWith))
+
+        let destination = Path.Combine(destinationDirectory, destinationFileName + (Path.GetExtension source))
 
         client.DownloadFileAsync(Uri source,
                                  destination,
@@ -116,6 +134,12 @@ type MainWindowViewModel() =
                 watcher.EnableRaisingEvents <- true)
         |> ignore
 
+        let replacements =
+            replacementsFileName
+            |> Observable.map readReplacements
+            |> Observable.startWith []
+            |> toReadOnlyReactiveProperty
+
         let fileToMoveViewModelsObservable =
             watcher.Renamed
             |> Observable.map (fun e -> FileInfo e.FullPath)
@@ -148,9 +172,8 @@ type MainWindowViewModel() =
                 (fun progress -> vm.MoveProgress.Value <- progress)
                 (fun () ->
                     canMoveFileSwitch.TurnOn()
-                    files.Remove vm |> ignore
-
-                    printfn "Grr - %s" vm.Name)
+                    files.Remove vm |> ignore)
+                replacements.Value
                 vm.FullName
                 destinationDirectory.Value)
         |> ignore
