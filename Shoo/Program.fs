@@ -17,9 +17,9 @@ type MainWindowBase = XAML<"MainWindow.xaml">
 type MainWindow() as this =
     inherit MainWindowBase()
 
-    let selectFolder previous =
+    let selectFolder showNewFolderButton previous =
         use folderBrowserDialog = new Forms.FolderBrowserDialog()
-        folderBrowserDialog.ShowNewFolderButton <- false
+        folderBrowserDialog.ShowNewFolderButton <- showNewFolderButton
 
         if not <| String.IsNullOrWhiteSpace previous && Directory.Exists previous
         then
@@ -56,11 +56,11 @@ type MainWindow() as this =
     member __.ViewModel : MainWindowViewModel = __.DataContext :?> MainWindowViewModel
 
     override __.SelectSourceDirectory_Click (_ : obj, e : RoutedEventArgs) =
-        selectFolder __.ViewModel.SourceDirectory.Value
+        selectFolder false __.ViewModel.SourceDirectory.Value
         |> Option.iter (fun directory -> __.ViewModel.SourceDirectory.Value <- directory)
 
     override __.SelectDestinationDirectory_Click (_ : obj, e : RoutedEventArgs) =
-        selectFolder __.ViewModel.DestinationDirectory.Value
+        selectFolder true __.ViewModel.DestinationDirectory.Value
         |> Option.iter (fun directory -> __.ViewModel.DestinationDirectory.Value <- directory)
 
     override __.SelectReplacementsFile_Click (_ : obj, e : RoutedEventArgs) =
