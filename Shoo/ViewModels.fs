@@ -6,6 +6,7 @@ open System.ComponentModel
 open System.IO
 open System.Net
 open System.Reactive.Concurrency
+open System.Reactive.Subjects
 open System.Windows
 
 open FSharp.Control.Reactive
@@ -19,13 +20,19 @@ module Utility =
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
-type Download = { Source : string; Destination : string }
+type CopyOperation =
+    {
+        Source : string
+        Destination : string
+        WebClient : WebClient
+    }
 
 type FileToMoveViewModel(fileInfo : FileInfo) =
 
     let progress = new ReactiveProperty<_>(0)
 
     member __.Name = fileInfo.Name
+    member __.FullName = fileInfo.FullName
     member __.Time = fileInfo.LastWriteTime
     member __.Size = fileInfo.Length
     member __.MoveProgress = progress
@@ -35,29 +42,41 @@ type MainWindowViewModel() =
     let destinationDirectory = new ReactiveProperty<_>("")
 
     // see https://stackoverflow.com/a/19755317/236507
-    let copy source destinationDirectory =
+    let copy reportProgress onDownloadComplete source destinationDirectory =
         let client = new WebClient()
-        client.DownloadProgressChanged.Add (fun (e : DownloadProgressChangedEventArgs) ->
-            if e.ProgressPercentage % 10 = 0
-            then
-                printfn "%i %%" e.ProgressPercentage)
-        client.DownloadFileCompleted.Add (fun (e : AsyncCompletedEventArgs) ->
-            let download = e.UserState :?> Download
+        client.DownloadProgressChanged
+        |> Observable.map (fun (e : DownloadProgressChangedEventArgs) -> e.ProgressPercentage)
+        |> Observable.distinctUntilChanged
+        |> Observable.subscribe reportProgress
+        |> ignore
+
+        client.DownloadFileCompleted
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe (fun (e : AsyncCompletedEventArgs) ->
+            let download = e.UserState :?> CopyOperation
 
             let time = (FileInfo download.Source).LastWriteTimeUtc
 
-            File.SetLastWriteTimeUtc(download.Destination, time))
+            File.SetLastWriteTimeUtc(download.Destination, time)
+            
+            download.WebClient.Dispose()
+            
+            onDownloadComplete())
+        |> ignore
 
         let destination = Path.Combine(destinationDirectory, Path.GetFileName source)
 
-        client.DownloadFileAsync(Uri source, destination, { Source = source; Destination = destination })
+        client.DownloadFileAsync(Uri source,
+                                 destination,
+                                 { Source = source; Destination = destination; WebClient = client })
 
     let mutable isSourceDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable isDestinationDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let files = ObservableCollection<_>()
     
-    let canMoveFile = new BooleanNotifier(true)
+    let canMoveFileSwitch = new BooleanNotifier(true)
+    let canMoveFile = canMoveFileSwitch |> Observable.startWith [ true ]
 
     let watcher = new FileSystemWatcher()
 
@@ -89,16 +108,37 @@ type MainWindowViewModel() =
                 watcher.EnableRaisingEvents <- true)
         |> ignore
 
-        let fileToMoveViewModels =
+        let fileToMoveViewModelsObservable =
             watcher.Renamed
             |> Observable.map (fun e -> FileInfo e.FullPath |> FileToMoveViewModel)
+
+        let fileToMoveViewModels = new ReplaySubject<_>()
+        
+        fileToMoveViewModelsObservable
+        |> Observable.subscribeObserver fileToMoveViewModels
+        |> ignore
+
+        canMoveFile |> Observable.filter id
+        |> Observable.zip fileToMoveViewModels
+        |> Observable.map fst
+        |> Observable.subscribe (fun vm -> 
+            canMoveFileSwitch.TurnOff()
+
+            copy
+                (fun progress -> vm.MoveProgress.Value <- progress)
+                (fun () ->
+                    canMoveFileSwitch.TurnOn()
+                    files.Remove vm |> ignore
+                    
+                    printfn "Grr - %s" vm.Name)
+                vm.FullName
+                destinationDirectory.Value)
+        |> ignore
 
         fileToMoveViewModels
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe files.Add
         |> ignore
-
-        
 
     member __.SourceDirectory = sourceDirectory
     member __.DestinationDirectory = destinationDirectory

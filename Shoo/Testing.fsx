@@ -1,14 +1,19 @@
 ﻿open System
 open System.IO
 
-let copySource = @"E:\Staging\Shoo\Source"
-let watching = @"E:\Staging\Shoo\Watching"
+let copySource = @"D:\Development\Staging\Shoo\Source"
+let watching = @"D:\Development\Staging\Shoo\Watching"
+let destination = @"F:\Development\Staging\Shoo\Destination"
 
 //copySource
 //|> Directory.GetFiles
 //|> Seq.iter (fun name -> File.Move(name, name + "_"))
 
 watching
+|> Directory.GetFiles
+|> Seq.iter File.Delete
+
+destination
 |> Directory.GetFiles
 |> Seq.iter File.Delete
 
