@@ -84,6 +84,8 @@ type MainWindowViewModel() =
 
             copyOperation.WebClient.Dispose()
 
+            File.Delete copyOperation.Source
+
             onDownloadComplete())
         |> ignore
 
