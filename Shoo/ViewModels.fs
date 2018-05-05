@@ -73,6 +73,8 @@ type MainWindowViewModel() =
     let mutable isSourceDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable isDestinationDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
+    let enableProcessing = new ReactiveProperty<_>(false)
+
     let files = ObservableCollection<_>()
     
     let canMoveFileSwitch = new BooleanNotifier(true)
@@ -121,6 +123,7 @@ type MainWindowViewModel() =
         [
             canMoveFile |> Observable.map id
             isDestinationDirectoryValid |> Observable.map id
+            enableProcessing |> Observable.map id
         ]
         |> Observable.combineLatestSeq
         |> Observable.map (Seq.toList >> List.forall id)
@@ -150,5 +153,7 @@ type MainWindowViewModel() =
     member __.DestinationDirectory = destinationDirectory
     member __.IsSourceDirectoryValid = isSourceDirectoryValid
     member __.IsDestinationDirectoryValid = isDestinationDirectoryValid
+
+    member __.EnableProcessing = enableProcessing
 
     member __.Files = files
