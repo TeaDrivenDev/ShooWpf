@@ -26,6 +26,7 @@ type CopyOperation =
     {
         Source : string
         Destination : string
+        Extension : string
         WebClient : WebClient
     }
 
@@ -42,6 +43,9 @@ type FileToMoveViewModel(fileInfo : FileInfo) =
     member __.MoveProgress = progress
 
 type MainWindowViewModel() =
+    [<Literal>]
+    let shooFileNameExtension = ".__shoo__"
+
     let sourceDirectory = new ReactiveProperty<_>("")
     let destinationDirectory = new ReactiveProperty<_>("")
 
@@ -69,13 +73,16 @@ type MainWindowViewModel() =
         client.DownloadFileCompleted
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun (e : AsyncCompletedEventArgs) ->
-            let download = e.UserState :?> CopyOperation
+            let copyOperation = e.UserState :?> CopyOperation
 
-            let time = (FileInfo download.Source).LastWriteTimeUtc
+            let time = (FileInfo copyOperation.Source).LastWriteTimeUtc
 
-            File.SetLastWriteTimeUtc(download.Destination, time)
+            File.SetLastWriteTimeUtc(copyOperation.Destination, time)
+            File.Move(
+                copyOperation.Destination,
+                Path.ChangeExtension(copyOperation.Destination, copyOperation.Extension))
 
-            download.WebClient.Dispose()
+            copyOperation.WebClient.Dispose()
 
             onDownloadComplete())
         |> ignore
@@ -84,11 +91,17 @@ type MainWindowViewModel() =
             (Path.GetFileNameWithoutExtension source, replacements)
             ||> List.fold (fun acc current -> acc.Replace(current.ToReplace, current.ReplaceWith))
 
-        let destination = Path.Combine(destinationDirectory, destinationFileName + (Path.GetExtension source))
+        let destination = Path.Combine(destinationDirectory, destinationFileName + shooFileNameExtension)
 
-        client.DownloadFileAsync(Uri source,
-                                 destination,
-                                 { Source = source; Destination = destination; WebClient = client })
+        client.DownloadFileAsync(
+            Uri source,
+            destination,
+            {
+                Source = source
+                Destination = destination
+                Extension = Path.GetExtension source
+                WebClient = client
+            })
 
     let mutable isSourceDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable isDestinationDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
