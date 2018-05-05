@@ -60,9 +60,9 @@ type MainWindowViewModel() =
             let time = (FileInfo download.Source).LastWriteTimeUtc
 
             File.SetLastWriteTimeUtc(download.Destination, time)
-            
+
             download.WebClient.Dispose()
-            
+
             onDownloadComplete())
         |> ignore
 
@@ -77,10 +77,12 @@ type MainWindowViewModel() =
 
     let fileExtensions = new ReactiveProperty<_>("")
 
+    let replacementsFileName = new ReactiveProperty<_>("")
+
     let enableProcessing = new ReactiveProperty<_>(false)
 
     let files = ObservableCollection<_>()
-    
+
     let canMoveFileSwitch = new BooleanNotifier(true)
     let canMoveFile = canMoveFileSwitch |> Observable.startWith [ true ]
 
@@ -124,7 +126,7 @@ type MainWindowViewModel() =
             |> Observable.map FileToMoveViewModel
 
         let fileToMoveViewModels = new ReplaySubject<_>()
-        
+
         fileToMoveViewModelsObservable
         |> Observable.subscribeObserver fileToMoveViewModels
         |> ignore
@@ -139,7 +141,7 @@ type MainWindowViewModel() =
         |> Observable.filter id
         |> Observable.zip fileToMoveViewModels
         |> Observable.map fst
-        |> Observable.subscribe (fun vm -> 
+        |> Observable.subscribe (fun vm ->
             canMoveFileSwitch.TurnOff()
 
             copy
@@ -147,7 +149,7 @@ type MainWindowViewModel() =
                 (fun () ->
                     canMoveFileSwitch.TurnOn()
                     files.Remove vm |> ignore
-                    
+
                     printfn "Grr - %s" vm.Name)
                 vm.FullName
                 destinationDirectory.Value)
@@ -164,6 +166,8 @@ type MainWindowViewModel() =
     member __.IsDestinationDirectoryValid = isDestinationDirectoryValid
 
     member __.FileExtensions = fileExtensions
+
+    member __.ReplacementsFileName = replacementsFileName
 
     member __.EnableProcessing = enableProcessing
 
