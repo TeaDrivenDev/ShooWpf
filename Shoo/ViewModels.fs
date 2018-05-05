@@ -118,7 +118,13 @@ type MainWindowViewModel() =
         |> Observable.subscribeObserver fileToMoveViewModels
         |> ignore
 
-        canMoveFile |> Observable.filter id
+        [
+            canMoveFile |> Observable.map id
+            isDestinationDirectoryValid |> Observable.map id
+        ]
+        |> Observable.combineLatestSeq
+        |> Observable.map (Seq.toList >> List.forall id)
+        |> Observable.filter id
         |> Observable.zip fileToMoveViewModels
         |> Observable.map fst
         |> Observable.subscribe (fun vm -> 
