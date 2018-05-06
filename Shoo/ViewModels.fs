@@ -22,6 +22,9 @@ module Utility =
 
     let trim (s : string) = s.Trim()
 
+    let asFst second first = first, second
+    let asSnd first second = first, second
+
 type CopyOperation =
     {
         Source : string
@@ -60,6 +63,24 @@ type MainWindowViewModel() =
             |> Array.toList
         else []
 
+    let getDestinationFileName filePath extension =
+        let directory = Path.GetDirectoryName filePath
+        let fileName = Path.GetFileNameWithoutExtension filePath
+
+        let rec getFileName count =
+            let name =
+                match count with
+                | 1 -> fileName + extension
+                | _ -> sprintf "%s (%i)%s" fileName count extension
+                |> asSnd directory
+                |> Path.Combine
+
+            if File.Exists name
+            then getFileName (count + 1)
+            else name
+
+        getFileName 1
+
     // File copy with progress: https://stackoverflow.com/a/19755317/236507
     let copy reportProgress onDownloadComplete replacements source destinationDirectory =
         let client = new WebClient()
@@ -80,7 +101,7 @@ type MainWindowViewModel() =
             File.SetLastWriteTimeUtc(copyOperation.Destination, time)
             File.Move(
                 copyOperation.Destination,
-                Path.ChangeExtension(copyOperation.Destination, copyOperation.Extension))
+                getDestinationFileName copyOperation.Destination copyOperation.Extension)
 
             copyOperation.WebClient.Dispose()
 
