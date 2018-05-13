@@ -146,6 +146,22 @@
                       AutoGenerateColumns="False"
                       ItemsSource="{Binding Files}"
                       SelectionMode="Single">
+                <DataGrid.Resources>
+                    <Style BasedOn="{StaticResource MaterialDesignDataGridRow}"
+                           TargetType="DataGridRow">
+                        <Setter Property="IsEnabled" Value="True" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding MoveStatus.Value}"
+                                         Value="Complete">
+                                <Setter Property="IsEnabled" Value="False" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding MoveStatus.Value}"
+                                         Value="Error">
+                                <Setter Property="Background" Value="{StaticResource ErrorBackground}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
                 <DataGrid.Columns>
                     <materialDesign:MaterialDataGridTextColumn Width="450"
                                                                Binding="{Binding Name}"
