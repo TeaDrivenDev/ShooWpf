@@ -99,13 +99,13 @@ type MainWindowViewModel() =
             let time = (FileInfo copyOperation.Source).LastWriteTimeUtc
 
             File.SetLastWriteTimeUtc(copyOperation.Destination, time)
-            File.Move(
-                copyOperation.Destination,
-                getDestinationFileName copyOperation.Destination copyOperation.Extension)
+            let finalDestination = getDestinationFileName copyOperation.Destination copyOperation.Extension
+            File.Move(copyOperation.Destination, finalDestination)
 
             copyOperation.WebClient.Dispose()
 
-            File.Delete copyOperation.Source
+            if FileInfo(finalDestination).Length > 0L
+            then File.Delete copyOperation.Source
 
             onDownloadComplete())
         |> ignore
