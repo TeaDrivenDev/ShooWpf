@@ -39,13 +39,18 @@ type MoveStatus = Waiting = 0 | Moving = 1 | Complete = 2 | Error = 3
 
 type FileToMoveViewModel(fileInfo : FileInfo) =
 
+    let name = fileInfo.Name
+    let fullName = fileInfo.FullName
+    let time = fileInfo.LastWriteTime
+    let size = fileInfo.Length
+
     let progress = new ReactiveProperty<_>(0)
     let moveStatus = new ReactiveProperty<_>(MoveStatus.Waiting)
 
-    member __.Name = fileInfo.Name
-    member __.FullName = fileInfo.FullName
-    member __.Time = fileInfo.LastWriteTime
-    member __.Size = fileInfo.Length
+    member __.Name = name
+    member __.FullName = fullName
+    member __.Time = time
+    member __.Size = size
     member __.MoveProgress = progress
     member __.MoveStatus = moveStatus
 
