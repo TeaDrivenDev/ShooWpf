@@ -46,9 +46,3 @@ NUGET
     System.Reactive.Windows.Threading (4.0)
       System.Reactive (>= 4.0)
     System.ValueTuple (4.5)
-
-GROUP Build
-RESTRICTION: == net461
-NUGET
-  remote: https://api.nuget.org/v3/index.json
-    FAKE (5.1)

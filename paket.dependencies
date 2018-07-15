@@ -9,9 +9,3 @@ nuget ReactiveUI prerelease
 nuget FSharp.Core
 nuget System.Reactive.Compatibility
 nuget System.ValueTuple
-
-group Build
-    source https://api.nuget.org/v3/index.json
-    framework: net461
-
-    nuget FAKE

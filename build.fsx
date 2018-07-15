@@ -1,38 +1,39 @@
 System.IO.Directory.SetCurrentDirectory __SOURCE_DIRECTORY__
 
-#r @"packages/build/FAKE/tools/FakeLib.dll"
+#r "paket:
+nuget Fake.Core.Target
+nuget Fake.DotNet.MSBuild
+nuget Fake.DotNet.Paket
+nuget Fake.IO.FileSystem
+//"
 
-open System
-open System.IO
+#load ".fake/build.fsx/intellisense.fsx"
 
-open Fake
-open Fake.Git
-open Fake.Testing
+open Fake.Core
+open Fake.Core.TargetOperators
+open Fake.DotNet
+open Fake.IO
+open Fake.IO.Globbing.Operators
 
 let solutionFile  = "Shoo.sln"
 
 let gitOwner = "TeaDrivenDev"
 let gitHome = "https://github.com/" + gitOwner
 let gitName = "Shoo"
-let gitRaw = environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner)
+let gitRaw = Environment.environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner)
 
 let outputDirectory = "bin"
 
-Target "Clean" (fun _ -> CleanDirs [ outputDirectory ])
+Target.create "Restore" (fun _ -> Paket.restore id)
 
-Target "Build" (fun _ ->
+Target.create "Clean" (fun _ -> Shell.cleanDirs [ outputDirectory ])
+
+Target.create "Build" (fun _ ->
     !! solutionFile
-    |> MSBuildRelease "" "Rebuild"
+    |> MSBuild.runWithDefaults "Rebuild"
     |> ignore)
 
-//Target "RunTests" (fun _ ->
-//    !! "**/bin/Release/**/*.Tests.dll"
-//    |> xUnit2 id)
+"Restore"
+==> "Build"
 
-//Target "All" DoNothing
-
-"Build"
-//==> "RunTests"
-//==> "All"
-
-RunTargetOrDefault "Build"
+Target.runOrDefault "Build"
