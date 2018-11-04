@@ -170,6 +170,16 @@ type MainWindowViewModel() =
                 Directory.Exists destination && source <> destination)
             |> toReadOnlyReactiveProperty
 
+        isDestinationDirectoryValid
+        |> Observable.filter (id)
+        |> Observable.subscribe (fun _ ->
+            let potentialReplacementsFileName =
+                Path.Combine(DirectoryInfo(destinationDirectory.Value).Parent.FullName, ".replacements")
+
+            if File.Exists potentialReplacementsFileName
+            then replacementsFileName.Value <- potentialReplacementsFileName)
+        |> ignore
+
         isSourceDirectoryValid
         |> Observable.distinctUntilChanged
         |> Observable.subscribe(fun isValid ->
