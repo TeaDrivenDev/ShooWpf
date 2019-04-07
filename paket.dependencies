@@ -5,7 +5,7 @@ nuget FSharp.Control.Reactive
 nuget FsXaml.Wpf
 nuget MaterialDesignThemes
 nuget ReactiveProperty
-nuget ReactiveUI prerelease
+nuget ReactiveUI < 9
 nuget FSharp.Core
-nuget System.Reactive.Compatibility
+nuget Splat < 7
 nuget System.ValueTuple
