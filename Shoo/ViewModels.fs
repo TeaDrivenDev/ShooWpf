@@ -173,11 +173,12 @@ type MainWindowViewModel() =
         isDestinationDirectoryValid
         |> Observable.filter (id)
         |> Observable.subscribe (fun _ ->
-            let potentialReplacementsFileName =
-                Path.Combine(DirectoryInfo(destinationDirectory.Value).Parent.FullName, ".replacements")
-
-            if File.Exists potentialReplacementsFileName
-            then replacementsFileName.Value <- potentialReplacementsFileName)
+            match DirectoryInfo(destinationDirectory.Value).FullName with
+            | null -> None
+            | parent -> Path.Combine(parent, ".replacements") |> Some
+            |> Option.iter (fun potentialReplacementsFileName ->
+                if File.Exists potentialReplacementsFileName
+                then replacementsFileName.Value <- potentialReplacementsFileName))
         |> ignore
 
         isSourceDirectoryValid
