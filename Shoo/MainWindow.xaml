@@ -163,7 +163,7 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <materialDesign:MaterialDataGridTextColumn Width="450"
+                    <materialDesign:MaterialDataGridTextColumn Width="*"
                                                                Binding="{Binding Name}"
                                                                Header="Name"
                                                                IsReadOnly="True" />
@@ -187,6 +187,35 @@
                                              Maximum="100"
                                              Minimum="0"
                                              Value="{Binding MoveProgress.Value}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Width="50">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Width="20"
+                                        Height="20"
+                                        Padding="0 -10"
+                                        Command="{Binding ElementName=MainWindowView,
+                                                          Path=DataContext.RetryFileCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource {x:Type Button}}"
+                                               TargetType="{x:Type Button}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MoveStatus.Value}"
+                                                             Value="Error">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+
+                                    <materialDesign:PackIcon Kind="Reload"
+                                                             ToolTip="Retry transferring file" />
+                                </Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

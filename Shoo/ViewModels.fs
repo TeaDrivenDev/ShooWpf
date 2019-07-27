@@ -6,6 +6,7 @@ open System.ComponentModel
 open System.IO
 open System.Net
 open System.Reactive.Concurrency
+open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Windows
 
@@ -37,6 +38,8 @@ type Replacement = { ToReplace : string; ReplaceWith : string }
 
 type MoveStatus = Waiting = 0 | Moving = 1 | Complete = 2 | Error = 3
 
+type CreateMode = Create | Replace
+
 type FileToMoveViewModel(fileInfo : FileInfo) =
 
     let name = fileInfo.Name
@@ -61,6 +64,8 @@ type MainWindowViewModel() =
     let sourceDirectory = new ReactiveProperty<_>("")
     let destinationDirectory = new ReactiveProperty<_>("")
 
+    let mutable retryFileCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
+
     let readReplacements replacementsFilePath =
         if File.Exists replacementsFilePath
         then
@@ -84,14 +89,19 @@ type MainWindowViewModel() =
                 |> asSnd directory
                 |> Path.Combine
 
-            if File.Exists name
-            then getFileName (count + 1)
-            else name
+            let file = FileInfo name
+
+            if file.Exists
+            then
+                if file.Length = 0L
+                then name, Replace
+                else getFileName (count + 1)
+            else name, Create
 
         getFileName 1
 
     // File copy with progress: https://stackoverflow.com/a/19755317/236507
-    let copy reportProgress onDownloadComplete replacements source destinationDirectory =
+    let copy reportProgress onDownloadComplete replacements destinationDirectory source =
         let client = new WebClient()
 
         client.DownloadProgressChanged
@@ -108,7 +118,12 @@ type MainWindowViewModel() =
             let time = (FileInfo copyOperation.Source).LastWriteTimeUtc
 
             File.SetLastWriteTimeUtc(copyOperation.Destination, time)
-            let finalDestination = getDestinationFileName copyOperation.Destination copyOperation.Extension
+            let finalDestination, createMode =
+                getDestinationFileName copyOperation.Destination copyOperation.Extension
+
+            if createMode = Replace
+            then File.Delete finalDestination
+
             File.Move(copyOperation.Destination, finalDestination)
 
             copyOperation.WebClient.Dispose()
@@ -148,7 +163,7 @@ type MainWindowViewModel() =
 
     let files = ObservableCollection<_>()
 
-    let canMoveFileSwitch = new BooleanNotifier(true)
+    let canMoveFileSwitch = BooleanNotifier true
     let canMoveFile = canMoveFileSwitch |> Observable.startWith [ true ]
 
     let watcher = new FileSystemWatcher()
@@ -169,6 +184,8 @@ type MainWindowViewModel() =
             |> Observable.map (fun (source, destination) ->
                 Directory.Exists destination && source <> destination)
             |> toReadOnlyReactiveProperty
+
+        retryFileCommand <- ReactiveCommand.Create(fun (file: FileToMoveViewModel) -> file)
 
         isDestinationDirectoryValid
         |> Observable.filter (id)
@@ -221,7 +238,8 @@ type MainWindowViewModel() =
         |> Observable.combineLatestSeq
         |> Observable.map (Seq.toList >> List.forall id)
         |> Observable.filter id
-        |> Observable.zip fileToMoveViewModels
+        |> Observable.zip
+            (Observable.mergeArray [| fileToMoveViewModels; retryFileCommand.AsObservable() |])
         |> Observable.map fst
         |> Observable.subscribe (fun vm ->
             canMoveFileSwitch.TurnOff()
@@ -234,8 +252,8 @@ type MainWindowViewModel() =
                     canMoveFileSwitch.TurnOn()
                     vm.MoveStatus.Value <- moveStatus)
                 replacements.Value
-                vm.FullName
-                destinationDirectory.Value)
+                destinationDirectory.Value
+                vm.FullName)
         |> ignore
 
         fileToMoveViewModels
@@ -255,3 +273,5 @@ type MainWindowViewModel() =
     member __.EnableProcessing = enableProcessing
 
     member __.Files = files
+
+    member __.RetryFileCommand = retryFileCommand
