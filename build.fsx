@@ -1,3 +1,5 @@
+#nowarn "52"
+
 System.IO.Directory.SetCurrentDirectory __SOURCE_DIRECTORY__
 
 #r "paket:
@@ -39,3 +41,5 @@ Target.create "Build" (fun _ ->
 ==> "Build"
 
 Target.runOrDefault "Build"
+
+printfn "\nFinished %s\n\n" (System.DateTime.Now.ToString "HH:mm:ss")
