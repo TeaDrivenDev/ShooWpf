@@ -186,7 +186,6 @@ docs/content/release-notes.md
 
 .fake/
 !.fake/build.fsx/intellisense.fsx
-
-build.fsx.lock
+.ionide
 
 keys.txt
